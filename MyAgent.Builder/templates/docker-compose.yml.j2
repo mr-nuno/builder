@@ -1,0 +1,22 @@
+﻿services:
+  api:
+    image: {{ namespace | string.downcase }}-api
+    build:
+      context: .
+      dockerfile: src/{{ namespace }}.Api/Dockerfile
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database={{ namespace }}Db;User Id=sa;Password=MyStrongPassword123!;TrustServerCertificate=True;
+    depends_on:
+      - db
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=MyStrongPassword123!
+    ports:
+      - "1433:1433"

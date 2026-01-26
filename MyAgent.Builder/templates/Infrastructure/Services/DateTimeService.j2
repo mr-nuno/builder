@@ -1,0 +1,8 @@
+﻿using {{ namespace }}.Application.Common.Interfaces;
+
+namespace {{ namespace }}.Infrastructure.Services;
+
+public class DateTimeService(TimeProvider timeProvider) : IDateTimeProvider
+{
+    public DateTime UtcNow => timeProvider.GetUtcNow().DateTime;
+}

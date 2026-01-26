@@ -1,0 +1,46 @@
+﻿using FastEndpoints.Testing;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Testcontainers.MsSql;
+using {{ namespace }}.Infrastructure.Data;
+
+namespace {{ namespace }}.IntegrationTests;
+
+public class AppFixture : AppFixture<Program>
+{
+    // 1. Definiera SQL Server Container
+    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
+        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        .Build();
+
+    // 2. Starta container innan testerna kÃ¶rs
+    protected override async Task PreSetupAsync()
+    {
+        await _dbContainer.StartAsync();
+    }
+
+    // 3. Konfigurera om appen fÃ¶r att anvÃ¤nda containern
+    protected override void ConfigureApp(IWebHostBuilder b)
+    {
+        b.ConfigureTestServices(services =>
+        {
+            // Hitta och ta bort den gamla DbContext-konfigurationen (InMemory/LocalDB)
+            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+            if (descriptor != null) services.Remove(descriptor);
+
+            // LÃ¤gg till DbContext som pekar pÃ¥ Docker-containern
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseSqlServer(_dbContainer.GetConnectionString());
+            });
+        });
+    }
+
+    // 4. StÃ¤da upp efterÃ¥t
+    protected override async Task TearDownAsync()
+    {
+        await _dbContainer.DisposeAsync();
+    }
+}

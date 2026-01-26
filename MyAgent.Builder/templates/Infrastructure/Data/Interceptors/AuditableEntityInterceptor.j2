@@ -1,0 +1,40 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using {{ namespace }}.Application.Common.Interfaces;
+using {{ namespace }}.Domain.Common;
+
+namespace {{ namespace }}.Infrastructure.Data.Interceptors;
+
+public class AuditableEntityInterceptor(
+    IUserSession userSession, 
+    IDateTimeProvider dateTime) : SaveChangesInterceptor
+{
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    {
+        UpdateEntities(eventData.Context);
+        return base.SavingChangesAsync(eventData, result, cancellationToken);
+    }
+
+    private void UpdateEntities(DbContext? context)
+    {
+        if (context == null) return;
+
+        var user = userSession.UserId;
+        var now = dateTime.UtcNow;
+
+        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = now;
+                entry.Entity.CreatedBy = user;
+            }
+
+            if (entry.State == EntityState.Modified || entry.State == EntityState.Added)
+            {
+                entry.Entity.LastModifiedAt = now;
+                entry.Entity.LastModifiedBy = user;
+            }
+        }
+    }
+}

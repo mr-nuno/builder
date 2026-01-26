@@ -1,0 +1,35 @@
+﻿using FastEndpoints;
+using FastEndpoints.Swagger;
+using Microsoft.Identity.Web;
+using Scalar.AspNetCore;
+using {{ projectName }}.Infrastructure;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Add Entra ID Auth
+builder.Services.AddAuthentication().AddMicrosoftIdentityWebApi(builder.Configuration);
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanWrite", policy => 
+        policy.RequireRole("Admin", "Contributor")); 
+});
+
+// 2. Add App Layers
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddFastEndpoints();
+builder.Services.SwaggerDocument();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
+
+var app = builder.Build();
+
+// 3. Configure Pipeline
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseFastEndpoints();
+app.UseOpenApi();
+app.MapScalarApiReference();
+
+app.Run();
+
+public partial class Program { }

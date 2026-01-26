@@ -1,0 +1,15 @@
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myagent-builder:latest
+    # Mappa nuvarande mapp (.) till /data i containern
+    # Detta gör att den genererade koden hamnar på din hårddisk
+    volumes:
+      - ./requirements.md:/data/requirements.md
+      - ./domain.md:/data/domain.md
+      - ./system_prompt.txt:/data/system_prompt.txt
+    # Läs in miljövariabler från en .env-fil
+    env_file:
+      - .env

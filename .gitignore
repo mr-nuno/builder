@@ -1,0 +1,12 @@
+.vs/
+bin/
+obj/
+output/
+*.user
+.env
+.DS_Store
+TestResults/
+
+# Generated applications (artifacts from builder)
+ToDoApplication/
+# Add other generated project directories here as needed

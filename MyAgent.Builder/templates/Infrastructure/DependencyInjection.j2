@@ -1,0 +1,35 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using {{ namespace }}.Application.Common.Interfaces;
+using {{ namespace }}.Infrastructure.Data;
+using {{ namespace }}.Infrastructure.Data.Interceptors;
+using {{ namespace }}.Infrastructure.Services;
+
+namespace {{ namespace }}.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        // 1. Core Services
+        services.AddSingleton(TimeProvider.System);
+        services.AddTransient<IDateTimeProvider, DateTimeService>();
+        services.AddScoped<IUserSession, UserSession>();
+
+        // 2. Interceptors
+        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+
+        // 3. DbContext
+        services.AddDbContext<AppDbContext>((sp, options) =>
+        {
+            options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+            options.UseInMemoryDatabase("MyDb");
+        });
+
+        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+
+        return services;
+    }
+}

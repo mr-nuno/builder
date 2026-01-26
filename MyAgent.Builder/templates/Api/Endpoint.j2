@@ -1,0 +1,20 @@
+﻿using FastEndpoints;
+using {{ namespace }}.Application.Features.{{ entity.Name }}s.Commands;
+using MediatR;
+
+namespace {{ namespace }}.Api.Features.{{ entity.Name }}s;
+
+public class Create{{ entity.Name }}Endpoint(IMediator mediator) : Endpoint<Create{{ entity.Name }}Command, Guid>
+{
+    public override void Configure()
+    {
+        Post("/api/{{ entity.Name | string.downcase }}s");
+        AllowAnonymous();
+    }
+
+    public override async Task HandleAsync(Create{{ entity.Name }}Command req, CancellationToken ct)
+    {
+        var id = await mediator.Send(req, ct);
+        await SendOkAsync(id, ct);
+    }
+}

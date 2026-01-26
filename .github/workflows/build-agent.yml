@@ -1,0 +1,64 @@
+﻿name: 🚀 Build Agent Tool (.NET 10)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ 'MyAgent.Builder/**' ]
+  workflow_dispatch:
+
+jobs:
+  build-exe:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: Windows
+            rid: win-x64
+            ext: .exe
+          - target: Linux
+            rid: linux-x64
+            ext: ""
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
+      with: 
+        dotnet-version: 10.0.x
+        include-prerelease: true
+    - run: dotnet restore MyAgent.Builder/MyAgent.Builder.csproj
+    
+    - name: Publish Single File
+      run: >
+        dotnet publish MyAgent.Builder/MyAgent.Builder.csproj 
+        -c Release -r ${{ matrix.rid }} 
+        --self-contained true -p:PublishSingleFile=true 
+        -o ./output/${{ matrix.target }}
+        
+    - name: Copy Prompts
+      run: |
+        mkdir -p ./output/${{ matrix.target }}/prompts
+        cp -r MyAgent.Builder/prompts/* ./output/${{ matrix.target }}/prompts/
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: MyAgent-${{ matrix.target }}
+        path: ./output/${{ matrix.target }}/
+
+  build-docker:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/myagent:latest

@@ -1,0 +1,18 @@
+﻿using Microsoft.EntityFrameworkCore;
+using {{ namespace }}.Application.Common.Interfaces;
+using {{ namespace }}.Domain.Entities;
+
+namespace {{ namespace }}.Infrastructure.Data;
+
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IAppDbContext
+{
+    {{~ for entity in entity_list ~}}
+    public DbSet<{{ entity.Name }}> {{ entity.Name }}s => Set<{{ entity.Name }}>();
+    {{~ end ~}}
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+}

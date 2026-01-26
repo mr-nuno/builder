@@ -1,0 +1,28 @@
+﻿using FastEndpoints;
+using MediatR;
+using {{ namespace }}.Application.Features.{{ entity.Name }}s.Queries;
+
+namespace {{ namespace }}.Api.Features.{{ entity.Name }}s;
+
+public class Get{{ entity.Name }}ByIdEndpoint(IMediator mediator) : EndpointWithoutRequest<{{ entity.Name }}Dto>
+{
+    public override void Configure()
+    {
+        Get("/api/{{ entity.Name | string.downcase }}s/{id}");
+        AllowAnonymous();
+    }
+
+    public override async Task HandleAsync(CancellationToken ct)
+    {
+        var id = Route<Guid>("id");
+        var result = await mediator.Send(new Get{{ entity.Name }}ByIdQuery(id), ct);
+
+        if (result is null)
+        {
+            await SendNotFoundAsync(ct);
+            return;
+        }
+
+        await SendOkAsync(result, ct);
+    }
+}

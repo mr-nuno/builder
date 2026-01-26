@@ -1,0 +1,36 @@
+﻿# Baseras på .NET 10 (Preview/RC)
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER app
+WORKDIR /app
+EXPOSE 8080
+EXPOSE 8081
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+
+# Kopiera props-filer först (Central Package Management)
+COPY ["Directory.Packages.props", "."]
+COPY ["Directory.Build.props", "."]
+
+# Kopiera projektfiler och restore
+COPY ["src/{{ namespace }}.Api/{{ namespace }}.Api.csproj", "src/{{ namespace }}.Api/"]
+COPY ["src/{{ namespace }}.Application/{{ namespace }}.Application.csproj", "src/{{ namespace }}.Application/"]
+COPY ["src/{{ namespace }}.Domain/{{ namespace }}.Domain.csproj", "src/{{ namespace }}.Domain/"]
+COPY ["src/{{ namespace }}.Infrastructure/{{ namespace }}.Infrastructure.csproj", "src/{{ namespace }}.Infrastructure/"]
+
+RUN dotnet restore "src/{{ namespace }}.Api/{{ namespace }}.Api.csproj"
+
+# Kopiera resten av koden
+COPY . .
+WORKDIR "/src/src/{{ namespace }}.Api"
+RUN dotnet build "{{ namespace }}.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "{{ namespace }}.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "{{ namespace }}.Api.dll"]

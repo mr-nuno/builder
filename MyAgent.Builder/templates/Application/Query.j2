@@ -1,0 +1,35 @@
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using {{ namespace }}.Application.Common.Interfaces;
+
+namespace {{ namespace }}.Application.Features.{{ entity.Name }}s.Queries;
+
+public record {{ entity.Name }}Dto(
+    Guid Id,
+    {{~ for prop in entity.Properties ~}}
+    {{ prop.Type }} {{ prop.Name }}{{ if !for.last }}, {{ end }}
+    {{~ end ~}}
+);
+
+public record Get{{ entity.Name }}ByIdQuery(Guid Id) : IRequest<{{ entity.Name }}Dto?>
+{
+    // Nested Handler
+    public class Handler(IAppDbContext db) : IRequestHandler<Get{{ entity.Name }}ByIdQuery, {{ entity.Name }}Dto?>
+    {
+        public async Task<{{ entity.Name }}Dto?> Handle(Get{{ entity.Name }}ByIdQuery request, CancellationToken ct)
+        {
+            var entity = await db.{{ entity.Name }}s
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+            if (entity == null) return null;
+
+            return new {{ entity.Name }}Dto(
+                entity.Id,
+                {{~ for prop in entity.Properties ~}}
+                entity.{{ prop.Name }}{{ if !for.last }}, {{ end }}
+                {{~ end ~}}
+            );
+        }
+    }
+}

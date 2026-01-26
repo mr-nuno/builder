@@ -1,0 +1,9 @@
+﻿using {{ namespace }}.Application.Common.Interfaces;
+
+namespace {{ namespace }}.Infrastructure.Services;
+
+public class UserSession : IUserSession
+{
+    // Här skulle du injecta IHttpContextAccessor
+    public string? UserId => "SystemUser"; 
+}

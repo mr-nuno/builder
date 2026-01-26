@@ -1,0 +1,49 @@
+﻿using MediatR;
+using FluentValidation;
+using {{ namespace }}.Application.Common.Interfaces;
+using {{ namespace }}.Domain.Entities;
+
+namespace {{ namespace }}.Application.Features.{{ entity.Name }}s.Commands;
+
+public record Create{{ entity.Name }}Command(
+    {{~ for prop in entity.Properties ~}}
+    {{ prop.Type }} {{ prop.Name }}{{ if !for.last }}, {{ end }}
+    {{~ end ~}}
+) : IRequest<Guid>
+{
+    // Nested Validator
+    public class Validator : AbstractValidator<Create{{ entity.Name }}Command>
+    {
+        public Validator()
+        {
+            {{~ for prop in entity.Properties ~}}
+            {{~ if prop.Rules ~}}
+            RuleFor(x => x.{{ prop.Name }})
+                {{~ for rule in prop.Rules ~}}
+                .{{ rule }}
+                {{~ end ~}};
+            {{~ end ~}}
+            {{~ end ~}}
+        }
+    }
+    
+    // Nested Handler
+    public class Handler(IAppDbContext db) : IRequestHandler<Create{{ entity.Name }}Command, Guid>
+    {
+        public async Task<Guid> Handle(Create{{ entity.Name }}Command request, CancellationToken ct)
+        {
+            var entity = new {{ entity.Name }}
+            {
+                Id = Guid.NewGuid(),
+                {{~ for prop in entity.Properties ~}}
+                {{ prop.Name }} = request.{{ prop.Name }},
+                {{~ end ~}}
+            };
+
+            db.{{ entity.Name }}s.Add(entity);
+            await db.SaveChangesAsync(ct);
+
+            return entity.Id;
+        }
+    }
+}

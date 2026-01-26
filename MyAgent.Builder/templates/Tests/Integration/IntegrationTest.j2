@@ -1,0 +1,25 @@
+﻿using FastEndpoints;
+using FastEndpoints.Testing;
+using Shouldly;
+using {{ namespace }}.Application.Features.{{ entity.Name }}s.Commands;
+using {{ namespace }}.Api.Features.{{ entity.Name }}s; // <-- Refererar nu till .Api
+
+namespace {{ namespace }}.IntegrationTests.Features.{{ entity.Name }}s;
+
+public class Create{{ entity.Name }}Tests(AppFixture f) : TestBase<AppFixture>(f)
+{
+    [Fact]
+    public async Task Should_Create_{{ entity.Name }}()
+    {
+        var cmd = new Create{{ entity.Name }}Command(
+            {{~ for prop in entity.Properties ~}}
+            default {{ if !for.last }}, {{ end }}
+            {{~ end ~}}
+        );
+
+        var (rsp, res) = await Fixture.Client.POSTAsync<Create{{ entity.Name }}Endpoint, Create{{ entity.Name }}Command, Guid>(cmd);
+
+        rsp.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        res.ShouldNotBe(Guid.Empty);
+    }
+}
