@@ -200,7 +200,8 @@ The builder generates a complete, production-ready system:
 
 **GitHub integration fails**
 - Make sure `GH_TOKEN` is set in your `.env` file
-- Verify GitHub CLI is working: `gh auth status`
+- The GitHub CLI is already installed in the Docker image, but it needs authentication via `GH_TOKEN`
+- If you don't have a GitHub token, the builder will skip GitHub integration and continue with code generation
 
 ## Advanced Usage
 
