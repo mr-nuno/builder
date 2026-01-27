@@ -228,40 +228,36 @@ public class Program
         // Skapa Solution
         await Run("dotnet", $"new sln -n {slnName}");
 
-        var projects = new[] { "Domain", "Application", "Infrastructure", "Api" };
-        foreach (var proj in projects)
-        {
-            var fullProj = $"{slnName}.{proj}";
-            var type = proj == "Api" ? "webapi" : "classlib";
-            
-            if (!Directory.Exists($"src/{fullProj}"))
-            {
-                // Skapa projekt (.NET 10)
-                await Run("dotnet", $"new {type} -n {fullProj} -o src/{fullProj} -f net10.0");
-                await Run("dotnet", $"sln add src/{fullProj}");
-            }
-        }
-
-        // Lägg till referenser mellan lager (Clean Architecture)
-        await Run("dotnet", $"add src/{slnName}.Api reference src/{slnName}.Application");
-        await Run("dotnet", $"add src/{slnName}.Api reference src/{slnName}.Infrastructure");
-        await Run("dotnet", $"add src/{slnName}.Infrastructure reference src/{slnName}.Application");
-        await Run("dotnet", $"add src/{slnName}.Application reference src/{slnName}.Domain");
-
-        // Skapa Testprojekt
+        // Skapa projektmappar och generera .csproj-filer från templates
+        AnsiConsole.MarkupLine("[yellow]📁 Skapar projektstruktur...[/]");
+        
+        var projectModel = new { @namespace = slnName };
+        
+        // Domain
+        Directory.CreateDirectory($"src/{slnName}.Domain");
+        await Render("Domain/Domain.csproj.j2", $"src/{slnName}.Domain/{slnName}.Domain.csproj", projectModel);
+        await Run("dotnet", $"sln add src/{slnName}.Domain/{slnName}.Domain.csproj");
+        
+        // Application
+        Directory.CreateDirectory($"src/{slnName}.Application");
+        await Render("Application/Application.csproj.j2", $"src/{slnName}.Application/{slnName}.Application.csproj", projectModel);
+        await Run("dotnet", $"sln add src/{slnName}.Application/{slnName}.Application.csproj");
+        
+        // Infrastructure
+        Directory.CreateDirectory($"src/{slnName}.Infrastructure");
+        await Render("Infrastructure/Infrastructure.csproj.j2", $"src/{slnName}.Infrastructure/{slnName}.Infrastructure.csproj", projectModel);
+        await Run("dotnet", $"sln add src/{slnName}.Infrastructure/{slnName}.Infrastructure.csproj");
+        
+        // Api
+        Directory.CreateDirectory($"src/{slnName}.Api");
+        await Render("Api/Api.csproj.j2", $"src/{slnName}.Api/{slnName}.Api.csproj", projectModel);
+        await Run("dotnet", $"sln add src/{slnName}.Api/{slnName}.Api.csproj");
+        
+        // Testprojekt
         var testProj = $"{slnName}.IntegrationTests";
-        if(!Directory.Exists($"tests/{testProj}"))
-        {
-            await Run("dotnet", $"new xunit -n {testProj} -o tests/{testProj} -f net10.0");
-            await Run("dotnet", $"sln add tests/{testProj}");
-            
-            await Run("dotnet", $"add tests/{testProj} reference src/{slnName}.Api");
-            await Run("dotnet", $"add tests/{testProj} reference src/{slnName}.Infrastructure");
-            await Run("dotnet", $"add tests/{testProj} reference src/{slnName}.Domain");
-            
-            // Lägg till SQL Server paket till testerna manuellt så AppFixture kan använda det
-            await Run("dotnet", $"add tests/{testProj} package Microsoft.EntityFrameworkCore.SqlServer");
-        }
+        Directory.CreateDirectory($"tests/{testProj}");
+        await Render("Tests/IntegrationTests.csproj.j2", $"tests/{testProj}/{testProj}.csproj", projectModel);
+        await Run("dotnet", $"sln add tests/{testProj}/{testProj}.csproj");
 
         // ==================================================================================
         // 6. KODGENERERING (Scriban)
