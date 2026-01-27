@@ -1,4 +1,4 @@
-﻿name: 🚀 Build Agent Tool (.NET 10)
+name: 🚀 Build Agent Tool (.NET 10)
 
 on:
   push:
@@ -33,11 +33,6 @@ jobs:
         -c Release -r ${{ matrix.rid }} 
         --self-contained true -p:PublishSingleFile=true 
         -o ./output/${{ matrix.target }}
-        
-    - name: Copy Prompts
-      run: |
-        mkdir -p ./output/${{ matrix.target }}/prompts
-        cp -r MyAgent.Builder/prompts/* ./output/${{ matrix.target }}/prompts/
         
     - uses: actions/upload-artifact@v4
       with:
