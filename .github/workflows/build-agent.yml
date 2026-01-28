@@ -64,8 +64,9 @@ jobs:
           
           if [ "${{ steps.tag_version.outputs.VERSION }}" != "" ]; then
             VERSION="${{ steps.tag_version.outputs.VERSION }}"
-            TAGS="$TAGS,$REGISTRY:v$VERSION,$REGISTRY:$VERSION"
-            echo "Tagging with version: v$VERSION"
+            # Tag image with pure semantic version (e.g. 1.0.1) – no leading 'v'
+            TAGS="$TAGS,$REGISTRY:$VERSION"
+            echo "Tagging with version: $VERSION"
           fi
           
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
@@ -144,7 +145,7 @@ jobs:
             docker pull ghcr.io/${{ github.repository_owner }}/myagent:latest
             
             # Versioned (recommended for production)
-            docker pull ghcr.io/${{ github.repository_owner }}/myagent:v${{ steps.tag_version.outputs.VERSION }}
+            docker pull ghcr.io/${{ github.repository_owner }}/myagent:${{ steps.tag_version.outputs.VERSION }}
             ```
           files: |
             ./release/MyAgent.Builder-Windows.exe
