@@ -1,4 +1,4 @@
-﻿using {{ namespace }}.Domain.Common;
+using {{ namespace }}.Domain.Common;
 
 namespace {{ namespace }}.Domain.Entities;
 
@@ -8,7 +8,28 @@ public class {{ entity.Name }} : IAuditableEntity
 
     {{~ for prop in entity.Properties ~}}
     {{~ if prop.Name != "Id" && prop.Name != "id" ~}}
+    {{~ 
+        # Check if property is required (has NotEmpty in rules)
+        is_required = false
+        for rule in prop.Rules
+            if rule == "NotEmpty"
+                is_required = true
+            end
+        end
+        
+        # Check if type is already nullable (contains ?)
+        type_has_nullable = false
+        if prop.Type contains "?"
+            type_has_nullable = true
+        end
+    ~}}
+    {{~ if prop.Type == "string" && !type_has_nullable && is_required ~}}
+    public required string {{ prop.Name }} { get; set; }
+    {{~ elsif prop.Type == "string" && !type_has_nullable && !is_required ~}}
+    public string? {{ prop.Name }} { get; set; }
+    {{~ else ~}}
     public {{ prop.Type }} {{ prop.Name }} { get; set; }
+    {{~ end ~}}
     {{~ end ~}}
     {{~ end ~}}
 
