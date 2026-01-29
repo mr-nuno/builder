@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./input:/app/input:ro
+      - ./output:/app/output
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    working_dir: /app
+    command: ["--input", "/app/input", "--output", "/app/output"]
